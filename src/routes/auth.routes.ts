@@ -10,7 +10,7 @@ import {
 const router: ExpressRouter = Router();
 
 router.post("/register", register);
-router.post("/verify-email", verify);
+router.get("/verify-email", verify);
 router.post("/login", login);
 router.post("/forgot-password", sendForgotPasswordEmail);
 router.post("/reset-password", resetUserPassword);

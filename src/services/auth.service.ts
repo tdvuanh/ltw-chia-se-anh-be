@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import prisma from "../config/database";
+import prisma from "../config/prisma";
 import { generateRandomToken, generateTokenExpiry } from "../utils/token";
 import { generateAccessToken } from "./token.service";
 import {
@@ -20,6 +20,8 @@ export async function registerUser(
       OR: [{ email }, { username }],
     },
   });
+
+  console.log("Existing user check:", existingUser);
 
   if (existingUser) {
     const field = existingUser.email === email ? "email" : "username";
@@ -51,7 +53,7 @@ export async function registerUser(
     },
   });
 
-  const verificationLink = `${ENV.API_URL}/verify-email?token=${verificationToken}`;
+  const verificationLink = `${ENV.API_URL}/api/v1/auth/verify-email?token=${verificationToken}`;
   await sendEmail({
     to: email,
     subject: "Verify Your Email",
