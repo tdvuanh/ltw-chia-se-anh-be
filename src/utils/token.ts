@@ -1,0 +1,9 @@
+import crypto from "crypto";
+
+export function generateRandomToken(length: number = 32): string {
+  return crypto.randomBytes(length).toString("hex");
+}
+
+export function generateTokenExpiry(minutesFromNow: number = 15): Date {
+  return new Date(Date.now() + minutesFromNow * 60 * 1000);
+}
