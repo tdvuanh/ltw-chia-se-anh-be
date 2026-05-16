@@ -1,8 +1,8 @@
-import express from "express";
-import photoRoutes from "./photo.routes";
+import { Router, type Router as ExpressRouter } from "express";
+import authRoutes from "./auth.routes";
 
-const router = express.Router();
+const router: ExpressRouter = Router();
 
-router.use("/photos", photoRoutes);
+router.use("/auth", authRoutes);
 
 export default router;

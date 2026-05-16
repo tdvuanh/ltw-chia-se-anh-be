@@ -1,5 +1,5 @@
 import { ENV } from "./config/env";
-import express from "express";
+import express, { Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -8,9 +8,9 @@ import { errorHandler } from "./middlewares/error.middleware";
 
 import "./config/serialization";
 
-const apiPrefix = ENV.API_URI_PREFIX ?? "api";
+const apiPrefix = ENV.API_URI_PREFIX ?? "api/v1";
 
-const app = express();
+const app: Express = express();
 app.use(express.json());
 app.use(cors());
 app.use(helmet());

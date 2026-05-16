@@ -1,6 +1,10 @@
-import { ENV } from "./config/env";
 import app from "./app";
+import { ENV } from "./config/env";
 
-app.listen(ENV.PORT, () => {
-  console.log(`[server] listening on http://localhost:${ENV.PORT} (${ENV.NODE_ENV})`);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(
+    `Server running on http://localhost:${PORT}/${ENV.API_URI_PREFIX}`,
+  );
 });
