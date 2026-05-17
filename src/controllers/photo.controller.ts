@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { prisma } from "../config/prisma";
+import prisma from "../config/database";
 
 export async function getAllPhotos(
   _req: Request,
@@ -24,7 +24,7 @@ export async function getPhotoById(
   try {
     const { id } = req.params;
     const photo = await prisma.photos.findUnique({
-      where: { photo_id: BigInt(id as string) },
+      where: { id: BigInt(id as string) },
     });
 
     if (!photo) {
@@ -43,17 +43,18 @@ export async function createPhoto(
   next: NextFunction,
 ) {
   try {
-    const { title, url, description } = req.body;
+    const { title, image_url, description, user_id } = req.body;
 
-    if (!url) {
-      return res.status(400).json({ message: "URL is required" });
+    if (!image_url) {
+      return res.status(400).json({ message: "Image URL is required" });
     }
 
     const photo = await prisma.photos.create({
       data: {
-        title: title || null,
-        url,
+        title: title || "Untitled",
+        image_url,
         description: description || null,
+        user_id: BigInt(user_id),
       },
     });
 
@@ -70,10 +71,10 @@ export async function updatePhoto(
 ) {
   try {
     const { id } = req.params;
-    const { title, url, description } = req.body;
+    const { title, image_url, description } = req.body;
 
     const existingPhoto = await prisma.photos.findUnique({
-      where: { photo_id: BigInt(id as string) },
+      where: { id: BigInt(id as string) },
     });
 
     if (!existingPhoto) {
@@ -81,10 +82,10 @@ export async function updatePhoto(
     }
 
     const photo = await prisma.photos.update({
-      where: { photo_id: BigInt(id as string) },
+      where: { id: BigInt(id as string) },
       data: {
         title: title !== undefined ? title : existingPhoto.title,
-        url: url || existingPhoto.url,
+        image_url: image_url || existingPhoto.image_url,
         description:
           description !== undefined ? description : existingPhoto.description,
       },
@@ -105,7 +106,7 @@ export async function deletePhoto(
     const { id } = req.params;
 
     const existingPhoto = await prisma.photos.findUnique({
-      where: { photo_id: BigInt(id as string) },
+      where: { id: BigInt(id as string) },
     });
 
     if (!existingPhoto) {
@@ -113,7 +114,7 @@ export async function deletePhoto(
     }
 
     await prisma.photos.delete({
-      where: { photo_id: BigInt(id as string) },
+      where: { id: BigInt(id as string) },
     });
 
     res.status(200).json({ message: "Photo deleted successfully" });

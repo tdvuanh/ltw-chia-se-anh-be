@@ -45,6 +45,23 @@ export const updateProfileSchema = Joi.object({
   bio: Joi.string().optional(),
 });
 
+export const createCommentSchema = Joi.object({
+  photo_id: Joi.number().integer().positive().required().messages({
+    "number.positive": "Photo ID must be a positive number",
+  }),
+  content: Joi.string().min(1).max(1000).required().messages({
+    "string.min": "Comment content cannot be empty",
+    "string.max": "Comment cannot exceed 1000 characters",
+  }),
+});
+
+export const updateCommentSchema = Joi.object({
+  content: Joi.string().min(1).max(1000).required().messages({
+    "string.min": "Comment content cannot be empty",
+    "string.max": "Comment cannot exceed 1000 characters",
+  }),
+});
+
 export function validate(schema: Joi.ObjectSchema, data: unknown) {
   return schema.validate(data, { abortEarly: false });
 }

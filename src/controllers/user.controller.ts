@@ -13,7 +13,7 @@ export async function getUserProfile(
   next: NextFunction,
 ) {
   try {
-    const userId = BigInt(req.params.id);
+    const userId = BigInt(req.params.id as string);
     const user = await getProfile(userId);
 
     if (!user) {
@@ -84,9 +84,10 @@ export async function updateUserProfile(
       });
     }
 
-    const userId = req.params.id;
+    const userId = req.params.id as string;
+    const currentUserId = req.user.userId.toString();
 
-    if (req?.user?.userId !== userId) {
+    if (currentUserId !== userId) {
       return res.status(403).json({
         message: "Forbidden: You can only update your own profile",
       });
@@ -104,7 +105,7 @@ export async function updateUserProfile(
       });
     }
 
-    const user = await updateProfile(userId, value);
+    const user = await updateProfile(BigInt(userId), value);
 
     res.status(200).json({
       message: "Profile updated successfully",
