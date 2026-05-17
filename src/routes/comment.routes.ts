@@ -7,13 +7,14 @@ import {
   updateCommentHandler,
   deleteCommentHandler,
 } from "../controllers/comment.controller";
+import { authenticateToken } from "../middlewares/auth.middleware";
 
 const router: ExpressRouter = Router();
 
 router.get("/photos/:photoId", getAllCommentsByPhoto);
 router.get("/:id", getComment);
-router.post("/", postComment);
-router.put("/:id", updateCommentHandler);
-router.delete("/:id", deleteCommentHandler);
+router.post("/", authenticateToken, postComment);
+router.put("/:id", authenticateToken, updateCommentHandler);
+router.delete("/:id", authenticateToken, deleteCommentHandler);
 
 export default router;

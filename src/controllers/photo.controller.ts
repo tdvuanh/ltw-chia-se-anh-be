@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import prisma from "../config/database";
+import prisma from "../config/prisma";
 
 export async function getAllPhotos(
   _req: Request,
