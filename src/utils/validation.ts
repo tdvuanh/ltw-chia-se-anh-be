@@ -39,6 +39,12 @@ export const verifyEmailSchema = Joi.object({
   token: Joi.string().required(),
 });
 
+export const updateProfileSchema = Joi.object({
+  full_name: Joi.string().max(100).optional(),
+  avatar_url: Joi.string().max(255).uri().optional(),
+  bio: Joi.string().optional(),
+});
+
 export function validate(schema: Joi.ObjectSchema, data: unknown) {
   return schema.validate(data, { abortEarly: false });
 }
