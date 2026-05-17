@@ -5,42 +5,35 @@ const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_POOL_URL!,
 });
 
-const prisma = new PrismaClient({ adapter });
-
 // Helper function to convert BigInt to string recursively
-const convertBigInt = (obj: any): any => {
-  if (Array.isArray(obj)) {
-    return obj.map(convertBigInt);
+function serializeBigInt(data: any): any {
+  if (typeof data === "bigint") {
+    return data.toString();
   }
 
-  if (obj && typeof obj === "object") {
-    const converted: any = {};
-    for (const key in obj) {
-      if (typeof obj[key] === "bigint") {
-        converted[key] = obj[key].toString();
-      } else if (typeof obj[key] === "object") {
-        converted[key] = convertBigInt(obj[key]);
-      } else {
-        converted[key] = obj[key];
-      }
-    }
-    return converted;
+  if (Array.isArray(data)) {
+    return data.map(serializeBigInt);
   }
 
-  return obj;
-};
+  if (data && typeof data === "object") {
+    return Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [key, serializeBigInt(value)]),
+    );
+  }
 
-// Apply middleware to serialize BigInt values
-prisma.$extends({
+  return data;
+}
+
+const prisma = new PrismaClient({ adapter }).$extends({
   query: {
     $allModels: {
       async $allOperations({ args, query }) {
         const result = await query(args);
-        return convertBigInt(result);
+
+        return serializeBigInt(result);
       },
     },
   },
 });
 
-export { prisma };
 export default prisma;

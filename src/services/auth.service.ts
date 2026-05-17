@@ -21,8 +21,6 @@ export async function registerUser(
     },
   });
 
-  console.log("Existing user check:", existingUser);
-
   if (existingUser) {
     const field = existingUser.email === email ? "email" : "username";
     throw {
@@ -53,7 +51,7 @@ export async function registerUser(
     },
   });
 
-  const verificationLink = `${ENV.API_URL}/api/v1/auth/verify-email?token=${verificationToken}`;
+  const verificationLink = `${ENV.API_URL}/verify-email?token=${verificationToken}`;
   await sendEmail({
     to: email,
     subject: "Verify Your Email",

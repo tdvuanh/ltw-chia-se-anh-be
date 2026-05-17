@@ -1,4 +1,5 @@
-import express from "express";
+import { Router, type Router as ExpressRouter } from "express";
+
 import {
   getAllPhotos,
   getPhotoById,
@@ -7,7 +8,7 @@ import {
   deletePhoto,
 } from "../controllers/photo.controller";
 
-const router = express.Router();
+const router: ExpressRouter = Router();
 
 router.get("/", getAllPhotos);
 router.get("/:id", getPhotoById);

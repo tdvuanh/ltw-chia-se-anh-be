@@ -34,8 +34,6 @@ export async function register(
       });
     }
 
-    console.log("Registering user with data:", req.body);
-
     const result = await registerUser(
       value.username,
       value.email,
@@ -64,7 +62,7 @@ export async function register(
 
 export async function verify(req: Request, res: Response, next: NextFunction) {
   try {
-    const { error, value } = validate(verifyEmailSchema, req.query);
+    const { error, value } = validate(verifyEmailSchema, req.body);
 
     if (error) {
       return res.status(400).json({

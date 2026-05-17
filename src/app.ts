@@ -6,8 +6,6 @@ import morgan from "morgan";
 import routes from "./routes";
 import { errorHandler } from "./middlewares/error.middleware";
 
-import "./config/serialization";
-
 const apiPrefix = ENV.API_URI_PREFIX ?? "api/v1";
 
 const app: Express = express();
