@@ -62,6 +62,34 @@ export const updateCommentSchema = Joi.object({
   }),
 });
 
+export const createPhotoSchema = Joi.object({
+  title: Joi.string().max(150).required(),
+  description: Joi.string().optional(),
+  image_url: Joi.string().uri().required().messages({
+    "string.uri": "Image URL must be a valid URL",
+  }),
+  tags: Joi.array().items(Joi.string().max(50)).optional(),
+});
+
+export const updatePhotoSchema = Joi.object({
+  title: Joi.string().max(150).optional(),
+  description: Joi.string().optional(),
+});
+
+export const searchPhotosSchema = Joi.object({
+  query: Joi.string().required(),
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).max(100).optional(),
+  tag: Joi.string().optional(),
+  username: Joi.string().optional(),
+});
+
+export const searchUsersSchema = Joi.object({
+  query: Joi.string().required(),
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).max(100).optional(),
+});
+
 export function validate(schema: Joi.ObjectSchema, data: unknown) {
   return schema.validate(data, { abortEarly: false });
 }

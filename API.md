@@ -1,95 +1,77 @@
-# Authentication API Documentation
+# Photo Sharing API Documentation
 
-Complete authentication system with JWT, email verification, password reset, and login/register endpoints.
+Complete REST API for a photo-sharing social media platform with authentication, photo management, likes, comments, follows, and search.
 
 ## Features
 
-- **User Registration** - Create new accounts with email verification
-- **Email Verification** - Verify email addresses before enabling login
-- **Login** - JWT-based authentication
-- **Forgot Password** - Send password reset link via email
-- **Reset Password** - Update password with secure token
-- **Password Security** - bcrypt hashing, single-use tokens, time-limited links
+- **Photo Management**: Upload photos with titles, descriptions, and tags
+- **Social Interactions**: Like/unlike photos, post/edit/delete comments
+- **Follow System**: Follow/unfollow users, view followers and following lists
+- **Search**: Find photos by name, tags, or username; search users
+- **Feed**: Personalized feed from followed users
+- **User Profiles**: View and update user profiles
 
-## Setup
+## API Endpoints Summary
 
-### 1. Environment Configuration
+### Authentication
+- POST `/auth/register` - Register new account
+- POST `/auth/login` - Login and get JWT token
+- POST `/auth/verify-email` - Verify email address
+- POST `/auth/forgot-password` - Request password reset
+- POST `/auth/reset-password` - Reset password
 
-Copy `.env.example` to `.env` and configure:
+### Photos
+- GET `/photos` - Get trending photos (paginated)
+- GET `/photos/feed` - Get personal feed (requires auth)
+- GET `/photos/:id` - Get single photo
+- GET `/photos/user/:userId` - Get user's photos
+- GET `/photos/search?q=...` - Search photos
+- POST `/photos` - Upload new photo (requires auth)
+- PATCH `/photos/:id` - Update photo (requires auth, owner only)
+- DELETE `/photos/:id` - Delete photo (requires auth, owner only)
 
-```bash
-cp .env.example .env
-```
+### Likes
+- POST `/photos/:id/like` - Like a photo (requires auth)
+- DELETE `/photos/:id/like` - Unlike a photo (requires auth)
+- GET `/photos/:id/likes` - Get users who liked photo
 
-### 2. Required Environment Variables
+### Comments
+- GET `/comments/photo/:photoId` - Get comments on photo
+- POST `/comments` - Post comment (requires auth)
+- PATCH `/comments/:id` - Update comment (requires auth, author only)
+- DELETE `/comments/:id` - Delete comment (requires auth, author only)
 
-```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+### Users
+- GET `/users/:id` - Get user profile
+- GET `/users/me` - Get authenticated user's profile (requires auth)
+- PATCH `/users/:id` - Update user profile (requires auth, owner only)
+- GET `/users/search?q=...` - Search users
 
-# JWT
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRY=24h
+### Follow
+- POST `/users/:id/follow` - Follow user (requires auth)
+- DELETE `/users/:id/follow` - Unfollow user (requires auth)
+- GET `/users/:id/followers` - Get user's followers
+- GET `/users/:id/following` - Get users being followed
 
-# Email (SMTP)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
-SMTP_FROM_EMAIL=noreply@yourapp.com
+---
 
-# API
-API_URL=http://localhost:3000
-API_URI_PREFIX=api/v1
-NODE_ENV=development
-```
+## Detailed Endpoint Documentation
 
-### 3. Database Setup
-
-```bash
-# Run migrations
-pnpm prisma migrate dev
-
-# Generate Prisma client
-pnpm prisma generate
-```
-
-### 4. Install Dependencies
-
-```bash
-pnpm install
-```
-
-### 5. Start Development Server
-
-```bash
-pnpm dev
-```
-
-Server runs at `http://localhost:3000/api/v1`
-
-## API Endpoints
-
-### Register User
-
-**POST** `/api/v1/auth/register`
-
-Register a new user and send verification email.
+### POST /auth/register
+Register a new user account.
 
 **Request Body:**
-
 ```json
 {
   "username": "johndoe",
   "email": "john@example.com",
-  "password": "SecurePassword123!",
-  "confirmPassword": "SecurePassword123!",
+  "password": "SecurePass123!",
+  "confirmPassword": "SecurePass123!",
   "full_name": "John Doe"
 }
 ```
 
 **Response (201):**
-
 ```json
 {
   "message": "Registration successful. Please check your email to verify your account.",
@@ -104,65 +86,20 @@ Register a new user and send verification email.
 }
 ```
 
-**Error (409):**
-
-```json
-{
-  "message": "User with this email already exists"
-}
-```
-
 ---
 
-### Verify Email
-
-**POST** `/api/v1/auth/verify-email`
-
-Verify user email using token from verification email.
+### POST /auth/login
+Login and receive JWT token.
 
 **Request Body:**
-
-```json
-{
-  "token": "verification-token-from-email"
-}
-```
-
-**Response (200):**
-
-```json
-{
-  "message": "Email verified successfully"
-}
-```
-
-**Error (410):**
-
-```json
-{
-  "message": "Verification token has expired"
-}
-```
-
----
-
-### Login
-
-**POST** `/api/v1/auth/login`
-
-Login user and receive JWT access token. Email must be verified first.
-
-**Request Body:**
-
 ```json
 {
   "email": "john@example.com",
-  "password": "SecurePassword123!"
+  "password": "SecurePass123!"
 }
 ```
 
 **Response (200):**
-
 ```json
 {
   "message": "Login successful",
@@ -178,248 +115,598 @@ Login user and receive JWT access token. Email must be verified first.
 }
 ```
 
-**Error (401):**
+---
 
+### POST /photos
+Upload a new photo with tags and description.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Request Body:**
 ```json
 {
-  "message": "Invalid email or password"
+  "title": "Beautiful Sunset",
+  "description": "Captured at the beach during golden hour",
+  "image_url": "https://example.com/image.jpg",
+  "tags": ["sunset", "beach", "nature"]
 }
 ```
 
-**Error (403):**
-
+**Response (201):**
 ```json
 {
-  "message": "Please verify your email before logging in"
+  "message": "Photo created successfully",
+  "data": {
+    "photo": {
+      "id": 1,
+      "title": "Beautiful Sunset",
+      "description": "Captured at the beach during golden hour",
+      "image_url": "https://example.com/image.jpg",
+      "user": {
+        "id": 1,
+        "username": "johndoe",
+        "full_name": "John Doe",
+        "avatar_url": "https://..."
+      },
+      "tags": [
+        {"id": 1, "name": "sunset"},
+        {"id": 2, "name": "beach"},
+        {"id": 3, "name": "nature"}
+      ],
+      "likes_count": 0,
+      "comments_count": 0,
+      "created_at": "2024-05-17T10:30:00Z"
+    }
+  }
 }
 ```
 
 ---
 
-### Forgot Password
+### GET /photos
+Get trending photos (sorted by likes, then date).
 
-**POST** `/api/v1/auth/forgot-password`
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Results per page, max 100 (default: 20)
 
-Request password reset link. Email will be sent with reset link.
-
-**Request Body:**
-
+**Response (200):**
 ```json
 {
-  "email": "john@example.com"
+  "message": "Photos retrieved successfully",
+  "data": {
+    "photos": [
+      {
+        "id": 1,
+        "title": "Beautiful Sunset",
+        "description": "Captured at the beach",
+        "image_url": "https://...",
+        "user": {
+          "id": 1,
+          "username": "johndoe",
+          "full_name": "John Doe",
+          "avatar_url": "https://..."
+        },
+        "tags": [
+          {"id": 1, "name": "sunset"},
+          {"id": 2, "name": "beach"}
+        ],
+        "likes_count": 42,
+        "comments_count": 5,
+        "created_at": "2024-05-17T10:30:00Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 100
+    }
+  }
 }
+```
+
+---
+
+### GET /photos/:id
+Get single photo with all details including comments.
+
+**Response (200):**
+```json
+{
+  "message": "Photo retrieved successfully",
+  "data": {
+    "photo": {
+      "id": 1,
+      "title": "Beautiful Sunset",
+      "description": "Captured at the beach",
+      "image_url": "https://...",
+      "user": {
+        "id": 1,
+        "username": "johndoe",
+        "full_name": "John Doe",
+        "avatar_url": "https://..."
+      },
+      "tags": [
+        {"id": 1, "name": "sunset"},
+        {"id": 2, "name": "beach"}
+      ],
+      "likes_count": 42,
+      "comments_count": 5,
+      "comments": [
+        {
+          "id": 1,
+          "content": "Amazing shot!",
+          "user": {
+            "id": 2,
+            "username": "janedoe",
+            "avatar_url": "https://..."
+          },
+          "created_at": "2024-05-17T11:00:00Z"
+        }
+      ],
+      "created_at": "2024-05-17T10:30:00Z"
+    }
+  }
+}
+```
+
+---
+
+### POST /photos/:id/like
+Like a photo.
+
+**Headers:**
+```
+Authorization: Bearer {token}
 ```
 
 **Response (200):**
-
 ```json
 {
-  "message": "Password reset link has been sent to your email"
+  "message": "Photo liked successfully",
+  "data": {
+    "likes_count": 43
+  }
 }
 ```
 
-**Note:** Returns success even if email doesn't exist (security best practice).
+**Error (409):**
+```json
+{
+  "message": "You already liked this photo"
+}
+```
 
 ---
 
-### Reset Password
+### DELETE /photos/:id/like
+Unlike a photo.
 
-**POST** `/api/v1/auth/reset-password`
-
-Reset password using token from reset email. Token expires in 15 minutes.
-
-**Request Body:**
-
-```json
-{
-  "token": "reset-token-from-email",
-  "password": "NewSecurePassword456!",
-  "confirmPassword": "NewSecurePassword456!"
-}
+**Headers:**
+```
+Authorization: Bearer {token}
 ```
 
 **Response (200):**
-
 ```json
 {
-  "message": "Password reset successfully"
-}
-```
-
-**Error (410):**
-
-```json
-{
-  "message": "Reset token has expired"
-}
-```
-
-**Error (410):**
-
-```json
-{
-  "message": "Reset token has already been used"
+  "message": "Photo unliked successfully",
+  "data": {
+    "likes_count": 42
+  }
 }
 ```
 
 ---
 
-## Using JWT Tokens
+### GET /photos/:id/likes
+Get list of users who liked the photo.
 
-Include the token in request headers for authenticated endpoints:
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Results per page, max 100 (default: 20)
 
-```bash
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+**Response (200):**
+```json
+{
+  "message": "Likes retrieved successfully",
+  "data": {
+    "users": [
+      {
+        "id": 2,
+        "username": "janedoe",
+        "full_name": "Jane Doe",
+        "avatar_url": "https://..."
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 43
+    }
+  }
+}
 ```
 
-## Project Structure
+---
 
-```
-src/
-├── config/
-│   ├── env.ts              # Environment variables
-│   ├── database.ts         # Prisma client
-│   └── serialization.ts    # BigInt serialization middleware
-├── controllers/
-│   └── auth.controller.ts  # Request handlers
-├── services/
-│   ├── auth.service.ts     # Business logic
-│   ├── email.service.ts    # Email sending (Nodemailer)
-│   └── token.service.ts    # JWT token generation
-├── routes/
-│   ├── auth.routes.ts      # Auth endpoints
-│   └── index.ts            # Main router
-├── middlewares/
-│   ├── auth.middleware.ts  # JWT verification
-│   └── error.middleware.ts # Error handling
-├── utils/
-│   ├── validation.ts       # Input validation (Joi)
-│   └── token.ts            # Token generation utilities
-├── types/
-│   └── index.ts            # TypeScript interfaces
-└── app.ts                  # Express app setup
-```
+### GET /photos/search
+Search photos by title, description, tags, or username.
 
-## Database Schema
+**Query Parameters:**
+- `q` (required) - Search query
+- `tag` (optional) - Filter by specific tag
+- `username` (optional) - Filter by username
+- `page` - Page number (default: 1)
+- `limit` - Results per page, max 100 (default: 20)
 
-### users table
+**Example:** `/photos/search?q=sunset&tag=beach&username=johndoe`
 
-- `id` - Primary key (BigInt)
-- `username` - Unique username (VARCHAR 50)
-- `email` - Unique email (VARCHAR 100)
-- `password_hash` - Bcrypt hashed password (VARCHAR 255)
-- `full_name` - User's full name (VARCHAR 100, nullable)
-- `email_verified` - Email verification status (Boolean, default: false)
-- `role` - User role (Enum: user, admin; default: user)
-- `status` - Account status (Enum: active, banned; default: active)
-- `created_at` - Account creation timestamp
-- `updated_at` - Last update timestamp
-- `last_password_changed_at` - Password change audit trail
-
-### email_verification_tokens table
-
-- `id` - Primary key
-- `user_id` - Foreign key to users
-- `token` - Unique verification token
-- `expires_at` - Token expiry timestamp (24 hours)
-
-### password_reset_tokens table
-
-- `id` - Primary key
-- `user_id` - Foreign key to users
-- `token` - Unique reset token
-- `expires_at` - Token expiry timestamp (15 minutes)
-- `used_at` - Single-use tracking timestamp
-
-## Security Features
-
-✅ **Password Hashing** - bcrypt with 10 salt rounds
-✅ **JWT Tokens** - Secure token-based authentication
-✅ **Email Verification** - Verify emails before login access
-✅ **Single-Use Tokens** - Password reset tokens can only be used once
-✅ **Time-Limited Links** - Tokens expire after configured duration
-✅ **Input Validation** - Joi schema validation on all endpoints
-✅ **Error Handling** - Safe error messages (no info leakage)
-✅ **Account Lockout** - Banned status support
-
-## Password Requirements
-
-- Minimum 8 characters
-- Maximum 128 characters
-- Alphanumeric + special characters supported
-
-## Error Codes
-
-| Status | Error            | Meaning                                                 |
-| ------ | ---------------- | ------------------------------------------------------- |
-| 400    | Validation error | Input validation failed                                 |
-| 401    | Unauthorized     | Invalid credentials or missing token                    |
-| 403    | Forbidden        | Email not verified / Account banned / Permission denied |
-| 404    | Not found        | User/Token not found                                    |
-| 409    | Conflict         | User/Email already exists                               |
-| 410    | Gone             | Token expired or already used                           |
-| 500    | Server error     | Internal server error                                   |
-
-## Testing the API
-
-### Example cURL Commands
-
-**Register:**
-
-```bash
-curl -X POST http://localhost:3000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "testuser",
-    "email": "test@example.com",
-    "password": "TestPass123!",
-    "confirmPassword": "TestPass123!",
-    "full_name": "Test User"
-  }'
+**Response (200):**
+```json
+{
+  "message": "Search results retrieved successfully",
+  "data": {
+    "photos": [...],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 5
+    }
+  }
+}
 ```
 
-**Login:**
+---
 
-```bash
-curl -X POST http://localhost:3000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "TestPass123!"
-  }'
+### GET /photos/feed
+Get personalized feed (photos from followed users + own photos).
+
+**Headers:**
+```
+Authorization: Bearer {token}
 ```
 
-**Forgot Password:**
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Results per page, max 100 (default: 20)
 
-```bash
-curl -X POST http://localhost:3000/api/v1/auth/forgot-password \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com"
-  }'
+**Response (200):**
+```json
+{
+  "message": "Feed retrieved successfully",
+  "data": {
+    "photos": [...],
+    "pagination": {
+      "page": 1,
+      "limit": 20
+    }
+  }
+}
 ```
 
-## Development
+---
 
-### Available Scripts
+### GET /photos/user/:userId
+Get all approved photos from a specific user.
 
-```bash
-pnpm dev              # Start dev server with hot reload
-pnpm build            # Build for production
-pnpm start            # Start production build
-pnpm lint             # Run ESLint
-pnpm format           # Format with Prettier
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Results per page, max 100 (default: 20)
+
+**Response (200):**
+```json
+{
+  "message": "User photos retrieved successfully",
+  "data": {
+    "photos": [...],
+    "pagination": {
+      "page": 1,
+      "limit": 20
+    }
+  }
+}
 ```
 
-### Tech Stack
+---
+
+### POST /comments
+Post a comment on a photo.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+{
+  "photo_id": 1,
+  "content": "Amazing shot!"
+}
+```
+
+**Response (201):**
+```json
+{
+  "message": "Comment created successfully",
+  "data": {
+    "comment": {
+      "id": 1,
+      "content": "Amazing shot!",
+      "photo_id": 1,
+      "user": {
+        "id": 1,
+        "username": "johndoe"
+      },
+      "created_at": "2024-05-17T11:00:00Z"
+    }
+  }
+}
+```
+
+---
+
+### GET /comments/photo/:photoId
+Get all comments on a photo.
+
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Results per page, max 100 (default: 20)
+
+**Response (200):**
+```json
+{
+  "message": "Comments retrieved successfully",
+  "data": {
+    "comments": [
+      {
+        "id": 1,
+        "content": "Amazing shot!",
+        "user": {
+          "id": 2,
+          "username": "janedoe",
+          "avatar_url": "https://..."
+        },
+        "created_at": "2024-05-17T11:00:00Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20
+    }
+  }
+}
+```
+
+---
+
+### POST /users/:id/follow
+Follow a user.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Followed successfully"
+}
+```
+
+---
+
+### DELETE /users/:id/follow
+Unfollow a user.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Unfollowed successfully"
+}
+```
+
+---
+
+### GET /users/:id/followers
+Get list of user's followers.
+
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Results per page, max 100 (default: 20)
+
+**Response (200):**
+```json
+{
+  "message": "Followers retrieved successfully",
+  "data": {
+    "followers": [
+      {
+        "id": 2,
+        "username": "janedoe",
+        "full_name": "Jane Doe",
+        "avatar_url": "https://...",
+        "bio": "Nature photographer"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 5
+    }
+  }
+}
+```
+
+---
+
+### GET /users/:id/following
+Get list of users being followed.
+
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Results per page, max 100 (default: 20)
+
+**Response (200):**
+```json
+{
+  "message": "Following retrieved successfully",
+  "data": {
+    "following": [...],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 10
+    }
+  }
+}
+```
+
+---
+
+### GET /users/search
+Search for users by username or full name.
+
+**Query Parameters:**
+- `q` (required) - Search query
+- `page` - Page number (default: 1)
+- `limit` - Results per page, max 100 (default: 20)
+
+**Response (200):**
+```json
+{
+  "message": "Users found successfully",
+  "data": {
+    "users": [
+      {
+        "id": 1,
+        "username": "johndoe",
+        "full_name": "John Doe",
+        "avatar_url": "https://...",
+        "bio": "Photography enthusiast",
+        "created_at": "2024-05-17T00:00:00Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1
+    }
+  }
+}
+```
+
+---
+
+## Error Handling
+
+All errors follow a consistent format:
+
+```json
+{
+  "message": "Error message",
+  "details": [
+    {
+      "field": "fieldName",
+      "message": "Validation message"
+    }
+  ]
+}
+```
+
+### HTTP Status Codes
+
+| Code | Meaning |
+|------|---------|
+| 200 | Success |
+| 201 | Created |
+| 400 | Validation error |
+| 401 | Unauthorized (missing/invalid token) |
+| 403 | Forbidden (permission denied) |
+| 404 | Not found |
+| 409 | Conflict (already exists) |
+| 410 | Gone (token expired/used) |
+| 500 | Server error |
+
+---
+
+## Authentication
+
+Use JWT token in Authorization header for protected endpoints:
+
+```
+Authorization: Bearer {token}
+```
+
+Token obtained from login or register endpoint. Valid for 24 hours.
+
+---
+
+## Tech Stack
 
 - **Runtime**: Node.js
 - **Framework**: Express.js
 - **Database**: PostgreSQL + Prisma ORM
 - **Authentication**: JWT + bcrypt
-- **Email**: Nodemailer (SMTP)
 - **Validation**: Joi
+- **Email**: Nodemailer
 - **Language**: TypeScript
+
+---
+
+## Installation & Running
+
+### Prerequisites
+- Node.js (v18+)
+- PostgreSQL
+- pnpm
+
+### Setup Steps
+
+1. **Clone repository and install dependencies**
+```bash
+pnpm install
+```
+
+2. **Configure environment**
+```bash
+cp .env.example .env
+# Edit .env with your database URL and email settings
+```
+
+3. **Run database migrations**
+```bash
+pnpm prisma migrate dev
+```
+
+4. **Start development server**
+```bash
+pnpm dev
+```
+
+Server runs at `http://localhost:3000/api/v1`
+
+### Available Scripts
+
+```bash
+pnpm dev              # Start with hot reload
+pnpm build            # Build for production
+pnpm start            # Run production build
+pnpm lint             # Check code quality
+pnpm format           # Format code with Prettier
+```
+
+---
 
 ## License
 

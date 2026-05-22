@@ -1,14 +1,25 @@
 import { Request, Response, NextFunction } from "express";
 import { getProfile, updateProfile } from "../services/user.service";
+import {
+  followUser,
+  unfollowUser,
+  getFollowers,
+  getFollowing,
+} from "../services/follow.service";
+import { searchUsers } from "../services/search.service";
 import { updateProfileSchema, validate } from "../utils/validation";
 import { createError } from "../middlewares/error.middleware";
 
 interface AuthRequest extends Request {
-  userId?: bigint;
+  user?: {
+    userId: bigint;
+    email: string;
+    role: string;
+  };
 }
 
 export async function getUserProfile(
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ) {
@@ -117,6 +128,187 @@ export async function updateUserProfile(
       createError(
         error.status || 500,
         error.message || "Failed to update profile",
+      ),
+    );
+  }
+}
+
+export async function followUserHandler(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    if (!req?.user?.userId) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const followingId = BigInt(req.params.id as string);
+
+    const result = await followUser(req.user.userId, followingId);
+
+    res.status(200).json({
+      message: result.message,
+    });
+  } catch (err: unknown) {
+    const error = err as { status?: number; message?: string };
+    next(
+      createError(
+        error.status || 500,
+        error.message || "Failed to follow user",
+      ),
+    );
+  }
+}
+
+export async function unfollowUserHandler(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    if (!req?.user?.userId) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const followingId = BigInt(req.params.id as string);
+
+    const result = await unfollowUser(req.user.userId, followingId);
+
+    res.status(200).json({
+      message: result.message,
+    });
+  } catch (err: unknown) {
+    const error = err as { status?: number; message?: string };
+    next(
+      createError(
+        error.status || 500,
+        error.message || "Failed to unfollow user",
+      ),
+    );
+  }
+}
+
+export async function getFollowersHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const userId = BigInt(req.params.id as string);
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.max(
+      1,
+      Math.min(100, parseInt(req.query.limit as string) || 20),
+    );
+    const skip = (page - 1) * limit;
+
+    const result = await getFollowers(userId, skip, limit);
+
+    res.status(200).json({
+      message: "Followers retrieved successfully",
+      data: {
+        followers: result.followers,
+        pagination: {
+          page,
+          limit,
+          total: result.total_count,
+        },
+      },
+    });
+  } catch (err: unknown) {
+    const error = err as { status?: number; message?: string };
+    next(
+      createError(
+        error.status || 500,
+        error.message || "Failed to retrieve followers",
+      ),
+    );
+  }
+}
+
+export async function getFollowingHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const userId = BigInt(req.params.id as string);
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.max(
+      1,
+      Math.min(100, parseInt(req.query.limit as string) || 20),
+    );
+    const skip = (page - 1) * limit;
+
+    const result = await getFollowing(userId, skip, limit);
+
+    res.status(200).json({
+      message: "Following retrieved successfully",
+      data: {
+        following: result.following,
+        pagination: {
+          page,
+          limit,
+          total: result.total_count,
+        },
+      },
+    });
+  } catch (err: unknown) {
+    const error = err as { status?: number; message?: string };
+    next(
+      createError(
+        error.status || 500,
+        error.message || "Failed to retrieve following",
+      ),
+    );
+  }
+}
+
+export async function searchUsersHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.max(
+      1,
+      Math.min(100, parseInt(req.query.limit as string) || 20),
+    );
+    const skip = (page - 1) * limit;
+
+    const query = req.query.q as string;
+
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({
+        message: "Search query is required",
+      });
+    }
+
+    const result = await searchUsers(query, skip, limit);
+
+    res.status(200).json({
+      message: "Users found successfully",
+      data: {
+        users: result.users,
+        pagination: {
+          page,
+          limit,
+          total: result.total_count,
+        },
+      },
+    });
+  } catch (err: unknown) {
+    const error = err as { status?: number; message?: string };
+    next(
+      createError(
+        error.status || 500,
+        error.message || "Failed to search users",
       ),
     );
   }
