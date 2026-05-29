@@ -27,6 +27,36 @@ export async function searchPhotos(
           mode: "insensitive",
         },
       },
+      {
+        photo_tags: {
+          some: {
+            tags: {
+              name: {
+                contains: searchQuery,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+      },
+      {
+        users: {
+          OR: [
+            {
+              username: {
+                contains: searchQuery,
+                mode: "insensitive",
+              },
+            },
+            {
+              full_name: {
+                contains: searchQuery,
+                mode: "insensitive",
+              },
+            },
+          ],
+        },
+      },
     ],
   };
 

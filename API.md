@@ -53,6 +53,13 @@ Complete REST API for a photo-sharing social media platform with authentication,
 - GET `/users/:id/followers` - Get user's followers
 - GET `/users/:id/following` - Get users being followed
 
+### Administration
+- GET `/admin/stats` - View stats & reports (requires admin auth)
+- PATCH `/admin/photos/:id/moderate` - Moderate pending photo (requires admin auth)
+- PATCH `/admin/users/:id/status` - Ban/unban user (requires admin auth)
+- DELETE `/admin/photos/:id` - Delete photo (requires admin auth)
+- DELETE `/admin/comments/:id` - Delete comment (requires admin auth)
+
 ---
 
 ## Detailed Endpoint Documentation
@@ -603,6 +610,133 @@ Search for users by username or full name.
       "total": 1
     }
   }
+}
+```
+
+---
+
+### GET /admin/stats
+Get administrative dashboard stats & reports.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Administrative dashboard stats retrieved successfully",
+  "data": {
+    "total_photos": 12,
+    "total_users": 6,
+    "banned_users": 1,
+    "active_users": 4,
+    "photos_by_status": {
+      "pending": 2,
+      "approved": 9,
+      "rejected": 1
+    }
+  }
+}
+```
+
+---
+
+### PATCH /admin/photos/:id/moderate
+Moderate pending uploaded photo (approve or reject).
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+{
+  "status": "approved" // or "rejected"
+}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Photo status updated successfully to approved",
+  "data": {
+    "photo": {
+      "id": 1,
+      "title": "Violating Image",
+      "status": "approved",
+      "image_url": "https://..."
+    }
+  }
+}
+```
+
+---
+
+### PATCH /admin/users/:id/status
+Change user status (ban or unban a user).
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Request Body:**
+```json
+{
+  "status": "banned" // or "active"
+}
+```
+
+**Response (200):**
+```json
+{
+  "message": "User status updated successfully to banned",
+  "data": {
+    "user": {
+      "id": 5,
+      "username": "spammer",
+      "email": "spammer@example.com",
+      "status": "banned",
+      "role": "user"
+    }
+  }
+}
+```
+
+---
+
+### DELETE /admin/photos/:id
+Delete violating photo as an administrator.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Photo deleted by administrator successfully"
+}
+```
+
+---
+
+### DELETE /admin/comments/:id
+Delete violating comment as an administrator.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Comment deleted by administrator successfully"
 }
 ```
 

@@ -33,3 +33,14 @@ export function authenticateToken(
     return res.status(403).json({ message: "Invalid or expired token" });
   }
 }
+
+export function requireAdmin(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ message: "Forbidden: Admin resource" });
+  }
+  next();
+}

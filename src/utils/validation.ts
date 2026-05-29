@@ -90,6 +90,14 @@ export const searchUsersSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).optional(),
 });
 
+export const moderatePhotoSchema = Joi.object({
+  status: Joi.string().valid("approved", "rejected").required(),
+});
+
+export const updateUserStatusSchema = Joi.object({
+  status: Joi.string().valid("active", "banned").required(),
+});
+
 export function validate(schema: Joi.ObjectSchema, data: unknown) {
   return schema.validate(data, { abortEarly: false });
 }

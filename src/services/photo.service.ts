@@ -22,6 +22,7 @@ export async function createPhotoWithTags(data: CreatePhotoData) {
       description: description || null,
       image_url,
       user_id,
+      status: "pending",
     },
   });
 
