@@ -1,0 +1,1123 @@
+{
+  "info": {
+    "_postman_id": "7fa526bf-b40b-4eb2-a6f9-7e9b469b4e07",
+    "name": "Photo Sharing API",
+    "description": "Complete Postman Collection for testing the Photo Sharing API. Organized into folders representing features such as Authentication, Photos, Comments, Users, and Administration.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Endpoints relating to user registration, verification, login, password recovery, and reset.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"johndoe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"confirmPassword\": \"SecurePass123!\",\n  \"full_name\": \"John Doe\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user account. On success, check the console or your mock database for the verification token."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"verification_token_here\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify-email"
+              ]
+            },
+            "description": "Verify your email address using the token sent or generated during registration."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.data && response.data.token) {",
+                  "    pm.collectionVariables.set(\"token\", response.data.token);",
+                  "    console.log(\"Auto-saved login JWT token to collection variable 'token'\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"SecurePass123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login and receive a JWT token. The token is automatically saved into the collection's 'token' variable on a successful response."
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Request a password reset email/token."
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset_token_here\",\n  \"password\": \"NewSecurePass123!\",\n  \"confirmPassword\": \"NewSecurePass123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Reset your password using the password reset token."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Photos",
+      "description": "Endpoints for viewing, uploading, editing, deleting, liking, and searching photos.",
+      "item": [
+        {
+          "name": "Get Trending Photos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/photos?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Results per page, max 100 (default: 20)"
+                }
+              ]
+            },
+            "description": "Get trending photos sorted by likes, then date (paginated)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Personalized Feed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/photos/feed?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos",
+                "feed"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Results per page (default: 20)"
+                }
+              ]
+            },
+            "description": "Get a personalized feed of photos from followed users + own photos. (Requires Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Photo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Beautiful Sunset\",\n  \"description\": \"Captured at the beach during golden hour\",\n  \"image_url\": \"https://images.unsplash.com/photo-1507525428034-b723cf961d3e\",\n  \"tags\": [\"sunset\", \"beach\", \"nature\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/photos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos"
+              ]
+            },
+            "description": "Upload a new photo with title, description, image URL, and optional tags. (Requires Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Photo Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/photos/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the photo"
+                }
+              ]
+            },
+            "description": "Get details of a single photo by its ID, including comments."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Photo",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Photo Title\",\n  \"description\": \"Updated description text\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/photos/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the photo to update"
+                }
+              ]
+            },
+            "description": "Update photo details. (Requires Authorization, Owner only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Photo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/photos/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the photo to delete"
+                }
+              ]
+            },
+            "description": "Delete a photo. (Requires Authorization, Owner or Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Like Photo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/photos/:id/like",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos",
+                ":id",
+                "like"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the photo to like"
+                }
+              ]
+            },
+            "description": "Like a photo. (Requires Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Unlike Photo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/photos/:id/like",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos",
+                "/:id/like"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the photo to unlike"
+                }
+              ]
+            },
+            "description": "Remove your like from a photo. (Requires Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Photo Likes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/photos/:id/likes?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos",
+                ":id",
+                "likes"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Page size"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the photo"
+                }
+              ]
+            },
+            "description": "Get a paginated list of users who liked this photo."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User's Photos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/photos/user/:userId?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos",
+                "user",
+                ":userId"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Page size"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "1",
+                  "description": "The ID of the user whose photos to retrieve"
+                }
+              ]
+            },
+            "description": "Get all approved photos from a specific user."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Photos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/photos/search?q=sunset&tag=beach&username=johndoe&page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "sunset",
+                  "description": "Search query text (searches title/description)"
+                },
+                {
+                  "key": "tag",
+                  "value": "beach",
+                  "description": "Filter by a specific tag",
+                  "disabled": true
+                },
+                {
+                  "key": "username",
+                  "value": "johndoe",
+                  "description": "Filter by uploader's username",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Search photos by title, description, tags, or username."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "description": "Endpoints to manage and read photo comments.",
+      "item": [
+        {
+          "name": "Get Comments on Photo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comments/photos/:photoId?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comments",
+                "photos",
+                ":photoId"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Page size"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "photoId",
+                  "value": "1",
+                  "description": "ID of the photo to get comments for"
+                }
+              ]
+            },
+            "description": "Retrieve all comments made on a specific photo. Note: Although API.md documents this as /comments/photo/:photoId, the actual server implementation endpoint is /comments/photos/:photoId."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Comment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comments/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comments",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the comment to retrieve"
+                }
+              ]
+            },
+            "description": "Retrieve details of a single comment by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Post Comment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"photo_id\": 1,\n  \"content\": \"Amazing shot!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comments"
+              ]
+            },
+            "description": "Post a new comment on a photo. (Requires Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Comment",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Updated comment content!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/comments/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comments",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the comment to update"
+                }
+              ]
+            },
+            "description": "Update comment content. (Requires Authorization, Author only). Note: Although API.md lists this as PATCH, the server implementation is configured as PUT."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comments/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "comments",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the comment to delete"
+                }
+              ]
+            },
+            "description": "Delete a comment. (Requires Authorization, Author or Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "Endpoints related to user profiles, searching users, and the follow/unfollow social system.",
+      "item": [
+        {
+          "name": "Search Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/search?q=john&page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "john",
+                  "description": "Search query for username or full name"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Page size",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Search for users by username or full name."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "Retrieve profile information of the currently authenticated user. (Requires Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "User ID to fetch"
+                }
+              ]
+            },
+            "description": "Get the public profile of a user by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"John Doe\",\n  \"avatar_url\": \"https://images.unsplash.com/photo-1535713875002-d1d0cf377fde\",\n  \"bio\": \"Photography enthusiast & explorer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of your own user account"
+                }
+              ]
+            },
+            "description": "Update your profile details. (Requires Authorization, Owner only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Follow User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id/follow",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id",
+                "follow"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "2",
+                  "description": "ID of the user to follow"
+                }
+              ]
+            },
+            "description": "Follow a user. (Requires Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Unfollow User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id/follow",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id",
+                "follow"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "2",
+                  "description": "ID of the user to unfollow"
+                }
+              ]
+            },
+            "description": "Unfollow a user. (Requires Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Followers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id/followers?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id",
+                "followers"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Page size"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "ID of the user"
+                }
+              ]
+            },
+            "description": "Get a paginated list of a user's followers."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Following",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id/following?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id",
+                "following"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Page size"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "ID of the user"
+                }
+              ]
+            },
+            "description": "Get a paginated list of users that this user follows."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Administration",
+      "description": "Administrative actions such as seeing stats, moderating photos, banning users, and deleting content. (Requires JWT + Admin Account)",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "stats"
+              ]
+            },
+            "description": "Get administrative dashboard stats & reports. (Requires Admin Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Moderate Photo",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/photos/:id/moderate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "photos",
+                ":id",
+                "moderate"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the pending photo to moderate"
+                }
+              ]
+            },
+            "description": "Moderate a pending photo (approve or reject by setting status to 'approved' or 'rejected'). (Requires Admin Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Moderate User Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"banned\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/:id/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "5",
+                  "description": "The ID of the user whose status to update"
+                }
+              ]
+            },
+            "description": "Ban or unban a user by setting their status to 'banned' or 'active'. (Requires Admin Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Delete Photo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/photos/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "photos",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the violating photo to delete"
+                }
+              ]
+            },
+            "description": "Delete a violating photo as an administrator. (Requires Admin Authorization)"
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "comments",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "The ID of the violating comment to delete"
+                }
+              ]
+            },
+            "description": "Delete a violating comment as an administrator. (Requires Admin Authorization)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
