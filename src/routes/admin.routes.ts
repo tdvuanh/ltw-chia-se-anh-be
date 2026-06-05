@@ -17,6 +17,9 @@ router.get("/users", getUsersListHandler);
 router.get("/reports", (req, res) => {
   res.status(200).json({ message: "Reports retrieved successfully", data: [] });
 });
+router.delete("/reports/:id", (req, res) => {
+  res.status(200).json({ message: "Report deleted successfully" });
+});
 router.patch("/photos/:id/moderate", moderatePhotoHandler);
 router.patch("/users/:id/status", updateUserStatusHandler);
 router.delete("/photos/:id", deletePhotoHandler);
