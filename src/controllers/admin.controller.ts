@@ -5,6 +5,8 @@ import {
   deletePhotoByAdmin,
   deleteCommentByAdmin,
   getStats,
+  getPendingPhotos,
+  getUsersList,
 } from "../services/admin.service";
 import {
   moderatePhotoSchema,
@@ -153,5 +155,37 @@ export async function getStatsHandler(
         error.message || "Failed to retrieve statistics",
       ),
     );
+  }
+}
+
+export async function getPendingPhotosHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const photos = await getPendingPhotos();
+    res.status(200).json({
+      message: "Pending photos retrieved successfully",
+      data: photos,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getUsersListHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const users = await getUsersList();
+    res.status(200).json({
+      message: "Users list retrieved successfully",
+      data: users,
+    });
+  } catch (error) {
+    next(error);
   }
 }

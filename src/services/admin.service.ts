@@ -1,4 +1,5 @@
 import prisma from "../config/prisma";
+import { getPhotoWithDetails } from "./photo.service";
 
 export async function moderatePhoto(photoId: bigint, status: "approved" | "rejected") {
   const photo = await prisma.photos.findUnique({
@@ -120,4 +121,38 @@ export async function getStats() {
       rejected: rejectedPhotos,
     },
   };
+}
+
+export async function getPendingPhotos() {
+  const photos = await prisma.photos.findMany({
+    where: { status: "pending" },
+    orderBy: { created_at: "desc" },
+  });
+  return Promise.all(photos.map((p) => getPhotoWithDetails(p.id)));
+}
+
+export async function getUsersList() {
+  const users = await prisma.users.findMany({
+    orderBy: { created_at: "desc" },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      full_name: true,
+      avatar_url: true,
+      bio: true,
+      role: true,
+      status: true,
+      created_at: true,
+      _count: {
+        select: {
+          photos: true,
+        },
+      },
+    },
+  });
+  return users.map((user) => ({
+    ...user,
+    photos_count: user._count.photos,
+  }));
 }

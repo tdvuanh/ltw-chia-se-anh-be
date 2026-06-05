@@ -5,11 +5,18 @@ import {
   updateUserStatusHandler,
   deletePhotoHandler,
   deleteCommentHandler,
+  getPendingPhotosHandler,
+  getUsersListHandler,
 } from "../controllers/admin.controller";
 
 const router: ExpressRouter = Router();
 
 router.get("/stats", getStatsHandler);
+router.get("/moderation/pending", getPendingPhotosHandler);
+router.get("/users", getUsersListHandler);
+router.get("/reports", (req, res) => {
+  res.status(200).json({ message: "Reports retrieved successfully", data: [] });
+});
 router.patch("/photos/:id/moderate", moderatePhotoHandler);
 router.patch("/users/:id/status", updateUserStatusHandler);
 router.delete("/photos/:id", deletePhotoHandler);
