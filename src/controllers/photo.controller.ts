@@ -7,6 +7,7 @@ import {
   getPhotosByUser,
   getPhotosFeed,
 } from "../services/photo.service";
+import { uploadImageToSupabase } from "../services/storage.service";
 import {
   likePhoto,
   unlikePhoto,
@@ -99,6 +100,31 @@ export async function createPhoto(
       });
     }
 
+    // Check if file is uploaded
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Validation error",
+        details: [
+          {
+            field: "image",
+            message: "Image file is required",
+          },
+        ],
+      });
+    }
+
+    // Pre-process tags if they are sent as JSON string or comma-separated string (common in multipart/form-data)
+    if (req.body.tags && typeof req.body.tags === "string") {
+      try {
+        req.body.tags = JSON.parse(req.body.tags);
+      } catch {
+        req.body.tags = req.body.tags
+          .split(",")
+          .map((t: string) => t.trim())
+          .filter(Boolean);
+      }
+    }
+
     const { error, value } = validate(createPhotoSchema, req.body);
 
     if (error) {
@@ -111,10 +137,13 @@ export async function createPhoto(
       });
     }
 
+    // Upload the photo to Supabase Storage
+    const imageUrl = await uploadImageToSupabase(req.file);
+
     const photo = await createPhotoWithTags({
       title: value.title,
       description: value.description,
-      image_url: value.image_url,
+      image_url: imageUrl,
       user_id: req.user.userId,
       tags: value.tags,
     });

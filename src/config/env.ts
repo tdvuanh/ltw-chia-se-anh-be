@@ -13,4 +13,7 @@ export const ENV = {
   SMTP_FROM_EMAIL: process.env.SMTP_FROM_EMAIL || "noreply@example.com",
   API_URL: process.env.API_URL || "http://localhost:3000",
   NODE_ENV: process.env.NODE_ENV || "development",
+  SUPABASE_URL: process.env.SUPABASE_URL || "",
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || "",
+  SUPABASE_STORAGE_BUCKET: process.env.SUPABASE_STORAGE_BUCKET || "photos",
 };

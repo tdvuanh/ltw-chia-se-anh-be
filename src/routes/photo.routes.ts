@@ -1,5 +1,6 @@
 import { Router, type Router as ExpressRouter } from "express";
 import { authenticateToken } from "../middlewares/auth.middleware";
+import { upload } from "../middlewares/upload.middleware";
 import {
   getAllPhotos,
   getPhotoById,
@@ -19,7 +20,7 @@ const router: ExpressRouter = Router();
 router.get("/search", searchPhotosHandler);
 router.get("/feed", authenticateToken, getFeedHandler);
 router.get("/", getAllPhotos);
-router.post("/", authenticateToken, createPhoto);
+router.post("/", authenticateToken, upload.single("image"), createPhoto);
 router.get("/:id", getPhotoById);
 router.patch("/:id", authenticateToken, updatePhoto);
 router.delete("/:id", authenticateToken, deletePhoto);

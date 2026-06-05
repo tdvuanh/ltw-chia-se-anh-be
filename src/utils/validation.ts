@@ -64,10 +64,7 @@ export const updateCommentSchema = Joi.object({
 
 export const createPhotoSchema = Joi.object({
   title: Joi.string().max(150).required(),
-  description: Joi.string().optional(),
-  image_url: Joi.string().uri().required().messages({
-    "string.uri": "Image URL must be a valid URL",
-  }),
+  description: Joi.string().optional().allow("", null),
   tags: Joi.array().items(Joi.string().max(50)).optional(),
 });
 
