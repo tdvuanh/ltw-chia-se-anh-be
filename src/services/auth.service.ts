@@ -157,6 +157,8 @@ export async function forgotPassword(email: string) {
     where: { email },
   });
 
+  console.log("forgotPassword", { user });
+
   if (!user) {
     throw {
       status: 404,

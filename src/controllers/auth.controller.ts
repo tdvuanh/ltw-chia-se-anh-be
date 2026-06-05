@@ -136,6 +136,8 @@ export async function sendForgotPasswordEmail(
 
     const result = await forgotPassword(value.email);
 
+    console.log("forgotPassword", { result });
+
     res.json({
       message: result.message,
     });
