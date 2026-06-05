@@ -148,6 +148,7 @@ export async function loginUser(email: string, password: string) {
       email: user.email,
       username: user.username,
       full_name: user.full_name,
+      role: user.role,
     },
   };
 }
