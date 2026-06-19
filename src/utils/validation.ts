@@ -95,6 +95,28 @@ export const updateUserStatusSchema = Joi.object({
   status: Joi.string().valid("active", "banned").required(),
 });
 
+export const changePasswordSchema = Joi.object({
+  currentPassword: Joi.string().required().messages({
+    "string.empty": "Current password is required",
+  }),
+  newPassword: passwordSchema,
+  confirmPassword: Joi.string()
+    .valid(Joi.ref("newPassword"))
+    .required()
+    .messages({
+      "any.only": "Passwords do not match",
+    }),
+});
+
+export const createReportSchema = Joi.object({
+  target_type: Joi.string().valid("photo", "comment").required(),
+  target_id: Joi.number().integer().positive().required(),
+  reason: Joi.string().max(100).required().messages({
+    "string.empty": "Report reason is required",
+  }),
+  description: Joi.string().max(1000).optional().allow("", null),
+});
+
 export function validate(schema: Joi.ObjectSchema, data: unknown) {
   return schema.validate(data, { abortEarly: false });
 }

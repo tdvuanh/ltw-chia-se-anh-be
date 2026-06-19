@@ -1,4 +1,32 @@
 import prisma from "../config/prisma";
+import { getPhotoWithDetails } from "./photo.service";
+import { createNotification } from "./notification.service";
+
+/**
+ * Lấy danh sách ảnh mà người dùng đã thích (chỉ ảnh đã được duyệt).
+ */
+export async function getLikedPhotos(
+  userId: bigint,
+  skip: number,
+  limit: number,
+) {
+  const likes = await prisma.likes.findMany({
+    where: { user_id: userId },
+    orderBy: { created_at: "desc" },
+    skip,
+    take: limit,
+    select: { photo_id: true },
+  });
+
+  const photos = await Promise.all(
+    likes.map((l) => getPhotoWithDetails(BigInt(l.photo_id))),
+  );
+
+  // Theo định nghĩa, tất cả ảnh ở đây đều đã được người dùng thích -> is_liked = true
+  return photos
+    .filter((p): p is NonNullable<typeof p> => !!p && p.status === "approved")
+    .map((p) => ({ ...p, is_liked: true }));
+}
 
 export async function likePhoto(photoId: bigint, userId: bigint) {
   const photo = await prisma.photos.findUnique({
@@ -41,6 +69,14 @@ export async function likePhoto(photoId: bigint, userId: bigint) {
         select: { user_id: true },
       },
     },
+  });
+
+  // Thông báo cho chủ ảnh có lượt thích mới
+  await createNotification({
+    recipientId: photo.user_id,
+    actorId: userId,
+    type: "like",
+    photoId: photoId,
   });
 
   return {

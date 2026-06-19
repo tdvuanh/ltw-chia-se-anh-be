@@ -13,12 +13,14 @@ import {
   searchPhotosHandler,
   getPhotosByUserHandler,
   getFeedHandler,
+  getLikedPhotosHandler,
 } from "../controllers/photo.controller";
 
 const router: ExpressRouter = Router();
 
 router.get("/search", searchPhotosHandler);
 router.get("/feed", authenticateToken, getFeedHandler);
+router.get("/liked", authenticateToken, getLikedPhotosHandler);
 router.get("/", getAllPhotos);
 router.post("/", authenticateToken, upload.single("image"), createPhoto);
 router.get("/:id", getPhotoById);

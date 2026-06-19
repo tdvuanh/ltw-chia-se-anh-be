@@ -23,6 +23,7 @@ Complete REST API for a photo-sharing social media platform with authentication,
 ### Photos
 - GET `/photos` - Get trending photos (paginated)
 - GET `/photos/feed` - Get personal feed (requires auth)
+- GET `/photos/liked` - Get photos the current user has liked (requires auth)
 - GET `/photos/:id` - Get single photo
 - GET `/photos/user/:userId` - Get user's photos
 - GET `/photos/search?q=...` - Search photos
@@ -42,9 +43,11 @@ Complete REST API for a photo-sharing social media platform with authentication,
 - DELETE `/comments/:id` - Delete comment (requires auth, author only)
 
 ### Users
-- GET `/users/:id` - Get user profile
+- GET `/users/:id` - Get user profile (enriched with photos/followers/following/likes counts and `is_following`; optional auth)
 - GET `/users/me` - Get authenticated user's profile (requires auth)
-- PATCH `/users/:id` - Update user profile (requires auth, owner only)
+- PATCH `/users/:id` - Update user profile: full_name, bio, avatar_url (requires auth, owner only)
+- POST `/users/me/avatar` - Upload/replace avatar image, multipart field `avatar` (requires auth)
+- POST `/users/me/change-password` - Change password (requires auth)
 - GET `/users/search?q=...` - Search users
 
 ### Follow
@@ -53,8 +56,25 @@ Complete REST API for a photo-sharing social media platform with authentication,
 - GET `/users/:id/followers` - Get user's followers
 - GET `/users/:id/following` - Get users being followed
 
+### Notifications
+- GET `/notifications?unread=true` - List notifications (requires auth)
+- GET `/notifications/unread-count` - Count unread notifications (requires auth)
+- PATCH `/notifications/:id/read` - Mark one as read (requires auth)
+- PATCH `/notifications/read-all` - Mark all as read (requires auth)
+
+> Notifications are generated automatically when another user likes, comments on the user's photo, or follows the user (self-actions are ignored).
+
+### Reports
+- POST `/reports` - Submit a report for a photo or comment (requires auth)
+
 ### Administration
-- GET `/admin/stats` - View stats & reports (requires admin auth)
+- GET `/admin/stats` - View stats (totals, active users, likes, comments, pending reports, top tags) (requires admin auth)
+- GET `/admin/activity` - Recent system activity feed (requires admin auth)
+- GET `/admin/moderation/pending` - List photos awaiting moderation (requires admin auth)
+- GET `/admin/users` - List all users (requires admin auth)
+- GET `/admin/reports` - List reported content (requires admin auth)
+- PATCH `/admin/reports/:id/resolve` - Resolve a report by removing the offending content (requires admin auth)
+- DELETE `/admin/reports/:id` - Dismiss a report, keeping the content (requires admin auth)
 - PATCH `/admin/photos/:id/moderate` - Moderate pending photo (requires admin auth)
 - PATCH `/admin/users/:id/status` - Ban/unban user (requires admin auth)
 - DELETE `/admin/photos/:id` - Delete photo (requires admin auth)
@@ -397,6 +417,31 @@ Authorization: Bearer {token}
 
 ---
 
+### GET /photos/liked
+Get the approved photos that the current user has liked, newest first. Requires auth.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Query params:** `page` (default 1), `limit` (default 50, max 100)
+
+**Response (200):**
+```json
+{
+  "message": "Liked photos retrieved successfully",
+  "data": {
+    "photos": [
+      { "id": "5", "title": "...", "image_url": "...", "is_liked": true, "likes_count": 12 }
+    ],
+    "pagination": { "page": 1, "limit": 50 }
+  }
+}
+```
+
+---
+
 ### GET /photos/user/:userId
 Get all approved photos from a specific user.
 
@@ -488,6 +533,84 @@ Get all comments on a photo.
   }
 }
 ```
+
+---
+
+### PATCH /users/:id
+Update your own profile. Owner only.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body (all optional):**
+```json
+{
+  "full_name": "Tên hiển thị mới",
+  "bio": "Giới thiệu bản thân",
+  "avatar_url": "https://.../avatar.jpg"
+}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Profile updated successfully",
+  "data": { "user": { "id": "1", "full_name": "Tên hiển thị mới", "bio": "Giới thiệu bản thân" } }
+}
+```
+**Errors:** `403` updating another user's profile, `400` validation error.
+
+---
+
+### POST /users/me/avatar
+Upload or replace the current user's avatar. The image is stored in Supabase Storage and `avatar_url` is updated.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+```
+
+**Form Data:**
+- `avatar`: image file (jpg/png, max 10MB)
+
+**Response (200):**
+```json
+{
+  "message": "Avatar updated successfully",
+  "data": { "user": { "id": "1", "avatar_url": "https://.../1718750000-abc.jpg" } }
+}
+```
+**Errors:** `400` no image provided / non-image file.
+
+---
+
+### POST /users/me/change-password
+Change the current user's password.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "currentPassword": "oldpass123",
+  "newPassword": "newpass123",
+  "confirmPassword": "newpass123"
+}
+```
+
+**Response (200):**
+```json
+{ "message": "Password changed successfully" }
+```
+**Errors:** `400` current password incorrect / validation error (passwords don't match or < 8 chars).
 
 ---
 
@@ -632,13 +755,129 @@ Authorization: Bearer {token}
     "total_users": 6,
     "banned_users": 1,
     "active_users": 4,
+    "total_likes": 87,
+    "total_comments": 41,
+    "pending_reports": 3,
     "photos_by_status": {
       "pending": 2,
       "approved": 9,
       "rejected": 1
-    }
+    },
+    "top_tags": [
+      { "name": "nature", "count": 8 },
+      { "name": "sunset", "count": 5 }
+    ]
   }
 }
+```
+
+---
+
+### GET /admin/activity
+Get the recent system activity feed (new photos, comments, follows).
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Recent activity retrieved successfully",
+  "data": [
+    { "type": "photo", "user": "alice", "action": "đã đăng ảnh mới", "target": "Hoàng hôn biển", "created_at": "2026-06-19T01:00:00.000Z" },
+    { "type": "comment", "user": "bob", "action": "đã bình luận ảnh", "target": "Núi rừng", "created_at": "2026-06-19T00:50:00.000Z" },
+    { "type": "follow", "user": "carol", "action": "đã theo dõi", "target": "alice", "created_at": "2026-06-19T00:40:00.000Z" }
+  ]
+}
+```
+
+---
+
+### POST /reports
+Submit a report for a violating photo or comment. Requires authentication.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "target_type": "photo",
+  "target_id": 5,
+  "reason": "Nội dung phản cảm / khiêu dâm",
+  "description": "Mô tả thêm (không bắt buộc)"
+}
+```
+- `target_type`: `"photo"` or `"comment"`
+- `target_id`: ID of the reported photo/comment
+
+**Response (201):**
+```json
+{
+  "message": "Report submitted successfully",
+  "data": { "report": { "id": "1", "status": "pending" } }
+}
+```
+
+**Errors:** `404` content not found, `409` already reported by this user.
+
+---
+
+### GET /admin/reports
+List reported content for moderation. Supports `?status=pending|resolved|dismissed|all` (default `pending`).
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Reports retrieved successfully",
+  "data": [
+    {
+      "id": "1",
+      "target_type": "photo",
+      "reason": "Spam hoặc lừa đảo",
+      "description": null,
+      "status": "pending",
+      "created_at": "2026-06-19T01:00:00.000Z",
+      "reported_by": "reporter1",
+      "content": "Tiêu đề ảnh bị báo cáo",
+      "content_owner": "owner1",
+      "photo_id": "5",
+      "comment_id": null,
+      "image_url": "https://.../5.jpg"
+    }
+  ],
+  "pagination": { "page": 1, "limit": 50, "total": 1 }
+}
+```
+
+---
+
+### PATCH /admin/reports/:id/resolve
+Resolve a report by permanently removing the reported content (photo or comment). The report row is removed via cascade.
+
+**Response (200):**
+```json
+{ "message": "Report resolved: reported photo has been removed" }
+```
+
+---
+
+### DELETE /admin/reports/:id
+Dismiss a report (delete the report only, keep the content).
+
+**Response (200):**
+```json
+{ "message": "Report dismissed successfully" }
 ```
 
 ---

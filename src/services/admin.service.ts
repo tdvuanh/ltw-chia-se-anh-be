@@ -90,6 +90,10 @@ export async function getStats() {
     approvedPhotos,
     rejectedPhotos,
     activeUsers,
+    totalLikes,
+    totalComments,
+    pendingReports,
+    topTags,
   ] = await Promise.all([
     prisma.photos.count(),
     prisma.users.count(),
@@ -108,6 +112,10 @@ export async function getStats() {
         ],
       },
     }),
+    prisma.likes.count(),
+    prisma.comments.count(),
+    prisma.reports.count({ where: { status: "pending" } }),
+    getTopTags(8),
   ]);
 
   return {
@@ -115,12 +123,103 @@ export async function getStats() {
     total_users: totalUsers,
     banned_users: bannedUsers,
     active_users: activeUsers,
+    total_likes: totalLikes,
+    total_comments: totalComments,
+    pending_reports: pendingReports,
     photos_by_status: {
       pending: pendingPhotos,
       approved: approvedPhotos,
       rejected: rejectedPhotos,
     },
+    top_tags: topTags,
   };
+}
+
+/**
+ * Thẻ (tag) phổ biến nhất theo số lượng ảnh được gắn — dữ liệu thật.
+ */
+export async function getTopTags(limit = 8) {
+  const tags = await prisma.tags.findMany({
+    select: {
+      name: true,
+      _count: { select: { photo_tags: true } },
+    },
+    orderBy: { photo_tags: { _count: "desc" } },
+    take: limit,
+  });
+
+  return tags
+    .map((t) => ({ name: t.name, count: t._count.photo_tags }))
+    .filter((t) => t.count > 0);
+}
+
+/**
+ * Dòng hoạt động gần đây của hệ thống (đăng ảnh, bình luận, theo dõi) — dữ liệu thật.
+ */
+export async function getRecentActivity(limit = 10) {
+  const [photos, comments, follows] = await Promise.all([
+    prisma.photos.findMany({
+      orderBy: { created_at: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        title: true,
+        created_at: true,
+        users: { select: { username: true } },
+      },
+    }),
+    prisma.comments.findMany({
+      orderBy: { created_at: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        created_at: true,
+        users: { select: { username: true } },
+        photos: { select: { title: true } },
+      },
+    }),
+    prisma.follows.findMany({
+      orderBy: { created_at: "desc" },
+      take: limit,
+      select: {
+        created_at: true,
+        users_follows_follower_idTousers: { select: { username: true } },
+        users_follows_following_idTousers: { select: { username: true } },
+      },
+    }),
+  ]);
+
+  const activity = [
+    ...photos.map((p) => ({
+      type: "photo" as const,
+      user: p.users?.username ?? "ai đó",
+      action: "đã đăng ảnh mới",
+      target: p.title,
+      created_at: p.created_at,
+    })),
+    ...comments.map((c) => ({
+      type: "comment" as const,
+      user: c.users?.username ?? "ai đó",
+      action: "đã bình luận ảnh",
+      target: c.photos?.title ?? "",
+      created_at: c.created_at,
+    })),
+    ...follows.map((f) => ({
+      type: "follow" as const,
+      user: f.users_follows_follower_idTousers?.username ?? "ai đó",
+      action: "đã theo dõi",
+      target: f.users_follows_following_idTousers?.username ?? "",
+      created_at: f.created_at,
+    })),
+  ];
+
+  return activity
+    .sort(
+      (a, b) =>
+        new Date(b.created_at as unknown as string).getTime() -
+        new Date(a.created_at as unknown as string).getTime(),
+    )
+    .slice(0, limit);
 }
 
 export async function getPendingPhotos() {

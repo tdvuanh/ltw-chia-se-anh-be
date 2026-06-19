@@ -7,6 +7,7 @@ import {
   getStats,
   getPendingPhotos,
   getUsersList,
+  getRecentActivity,
 } from "../services/admin.service";
 import {
   moderatePhotoSchema,
@@ -184,6 +185,23 @@ export async function getUsersListHandler(
     res.status(200).json({
       message: "Users list retrieved successfully",
       data: users,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getActivityHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const limit = Math.min(50, parseInt(req.query.limit as string) || 10);
+    const activity = await getRecentActivity(limit);
+    res.status(200).json({
+      message: "Recent activity retrieved successfully",
+      data: activity,
     });
   } catch (error) {
     next(error);

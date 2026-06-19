@@ -131,6 +131,7 @@ describe("Authentication API", () => {
         email: "test@example.com",
         username: "testuser",
         full_name: "Test User",
+        role: "user",
       });
     });
 

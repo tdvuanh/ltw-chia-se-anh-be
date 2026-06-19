@@ -35,6 +35,12 @@ describe("Admin API Security & Operations", () => {
       // Mock stats counts
       prismaMock.photos.count.mockResolvedValue(10);
       prismaMock.users.count.mockResolvedValue(5);
+      prismaMock.likes.count.mockResolvedValue(20);
+      prismaMock.comments.count.mockResolvedValue(15);
+      prismaMock.reports.count.mockResolvedValue(2);
+      prismaMock.tags.findMany.mockResolvedValue([
+        { name: "nature", _count: { photo_tags: 5 } }
+      ]);
 
       const res = await request(app)
         .get("/api/v1/admin/stats")

@@ -27,6 +27,9 @@ model users {
   photos                              photos[]
   email_verification_tokens          email_verification_tokens[]
   password_reset_tokens              password_reset_tokens[]
+  reports                             reports[]
+  notifications_received             notifications[]               @relation("notifications_recipient")
+  notifications_sent                 notifications[]               @relation("notifications_actor")
 }
 
 model photos {
@@ -43,6 +46,7 @@ model photos {
   comments       comments[]
   likes          likes[]
   photo_tags     photo_tags[]
+  reports        reports[]
   users          users        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([status, created_at(sort: Desc)], map: "photos_status_created_at_desc_idx")
@@ -60,6 +64,7 @@ model comments {
   updated_at DateTime @default(now()) @db.Timestamptz(6)
   photos     photos   @relation(fields: [photo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reports    reports[]
 
   @@index([photo_id])
   @@index([user_id])
@@ -141,4 +146,58 @@ model password_reset_tokens {
 
   @@index([token])
   @@index([user_id])
+}
+
+model reports {
+  id          BigInt        @id @default(autoincrement())
+  reporter_id BigInt
+  target_type report_target
+  photo_id    BigInt?
+  comment_id  BigInt?
+  reason      String        @db.VarChar(100)
+  description String?
+  status      report_status @default(pending)
+  created_at  DateTime      @default(now()) @db.Timestamptz(6)
+  resolved_at DateTime?     @db.Timestamptz(6)
+  reporter    users         @relation(fields: [reporter_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  photo       photos?       @relation(fields: [photo_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  comment     comments?     @relation(fields: [comment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([status, created_at(sort: Desc)], map: "reports_status_created_at_desc_idx")
+  @@index([reporter_id])
+  @@index([photo_id])
+  @@index([comment_id])
+}
+
+enum report_status {
+  pending
+  resolved
+  dismissed
+}
+
+enum report_target {
+  photo
+  comment
+}
+
+model notifications {
+  id           BigInt            @id @default(autoincrement())
+  recipient_id BigInt
+  actor_id     BigInt
+  type         notification_type
+  photo_id     BigInt?
+  comment_id   BigInt?
+  is_read      Boolean           @default(false)
+  created_at   DateTime          @default(now()) @db.Timestamptz(6)
+  recipient    users             @relation("notifications_recipient", fields: [recipient_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  actor        users             @relation("notifications_actor", fields: [actor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([recipient_id, is_read, created_at(sort: Desc)], map: "notifications_recipient_read_created_idx")
+  @@index([actor_id])
+}
+
+enum notification_type {
+  like
+  comment
+  follow
 }

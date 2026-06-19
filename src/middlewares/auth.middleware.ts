@@ -44,3 +44,25 @@ export function requireAdmin(
   }
   next();
 }
+
+/**
+ * Xác thực tùy chọn: nếu có token hợp lệ thì gắn req.user, ngược lại vẫn cho qua.
+ * Dùng cho route công khai nhưng cần biết người xem (vd: is_following).
+ */
+export function optionalAuth(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (token) {
+    try {
+      req.user = jwt.verify(token, ENV.JWT_SECRET) as JwtPayload;
+    } catch {
+      // Token không hợp lệ -> coi như khách, bỏ qua
+    }
+  }
+  next();
+}

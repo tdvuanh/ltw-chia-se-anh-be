@@ -1,4 +1,5 @@
 import prisma from "../config/prisma";
+import { createNotification } from "./notification.service";
 
 export interface CommentData {
   id: bigint;
@@ -60,6 +61,15 @@ export async function createComment(
         increment: 1,
       },
     },
+  });
+
+  // Thông báo cho chủ ảnh có bình luận mới (bỏ qua nếu tự bình luận ảnh mình)
+  await createNotification({
+    recipientId: photo.user_id,
+    actorId: input.user_id,
+    type: "comment",
+    photoId: BigInt(input.photo_id),
+    commentId: comment.id,
   });
 
   return convertCommentToResponse(comment);

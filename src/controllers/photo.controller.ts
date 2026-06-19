@@ -12,6 +12,7 @@ import {
   likePhoto,
   unlikePhoto,
   getPhotoLikes,
+  getLikedPhotos,
 } from "../services/like.service";
 import { searchPhotos, getTrendingPhotos } from "../services/search.service";
 import {
@@ -457,6 +458,43 @@ export async function getFeedHandler(
       createError(
         error.status || 500,
         error.message || "Failed to retrieve feed",
+      ),
+    );
+  }
+}
+
+export async function getLikedPhotosHandler(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.max(
+      1,
+      Math.min(100, parseInt(req.query.limit as string) || 50),
+    );
+    const skip = (page - 1) * limit;
+
+    const photos = await getLikedPhotos(req.user.userId, skip, limit);
+
+    res.status(200).json({
+      message: "Liked photos retrieved successfully",
+      data: {
+        photos,
+        pagination: { page, limit },
+      },
+    });
+  } catch (err: unknown) {
+    const error = err as { status?: number; message?: string };
+    next(
+      createError(
+        error.status || 500,
+        error.message || "Failed to retrieve liked photos",
       ),
     );
   }

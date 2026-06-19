@@ -1,5 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { getProfile, updateProfile } from "../services/user.service";
+import {
+  getProfile,
+  updateProfile,
+  changePassword,
+} from "../services/user.service";
 import {
   followUser,
   unfollowUser,
@@ -7,7 +11,12 @@ import {
   getFollowing,
 } from "../services/follow.service";
 import { searchUsers } from "../services/search.service";
-import { updateProfileSchema, validate } from "../utils/validation";
+import { uploadImageToSupabase } from "../services/storage.service";
+import {
+  updateProfileSchema,
+  changePasswordSchema,
+  validate,
+} from "../utils/validation";
 import { createError } from "../middlewares/error.middleware";
 
 interface AuthRequest extends Request {
@@ -25,7 +34,10 @@ export async function getUserProfile(
 ) {
   try {
     const userId = BigInt(req.params.id as string);
-    const user = await getProfile(userId);
+    const viewerId = req.user?.userId
+      ? BigInt(req.user.userId)
+      : undefined;
+    const user = await getProfile(userId, viewerId);
 
     if (!user) {
       return res.status(404).json({
@@ -128,6 +140,89 @@ export async function updateUserProfile(
       createError(
         error.status || 500,
         error.message || "Failed to update profile",
+      ),
+    );
+  }
+}
+
+/**
+ * Tải lên / thay đổi ảnh đại diện của người dùng hiện tại.
+ * POST /users/me/avatar (multipart, field "avatar")
+ */
+export async function uploadAvatarHandler(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    if (!req?.user?.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+
+    const avatarUrl = await uploadImageToSupabase(req.file);
+    const user = await updateProfile(BigInt(req.user.userId), {
+      avatar_url: avatarUrl,
+    });
+
+    res.status(200).json({
+      message: "Avatar updated successfully",
+      data: { user },
+    });
+  } catch (err: unknown) {
+    const error = err as { status?: number; message?: string };
+    next(
+      createError(
+        error.status || 500,
+        error.message || "Failed to upload avatar",
+      ),
+    );
+  }
+}
+
+/**
+ * Đổi mật khẩu của người dùng hiện tại.
+ * POST /users/me/change-password
+ */
+export async function changePasswordHandler(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    if (!req?.user?.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { error, value } = validate(changePasswordSchema, req.body);
+    if (error) {
+      return res.status(400).json({
+        message: "Validation error",
+        details: error.details.map((d) => ({
+          field: d.path.join("."),
+          message: d.message,
+        })),
+      });
+    }
+
+    await changePassword(
+      BigInt(req.user.userId),
+      value.currentPassword,
+      value.newPassword,
+    );
+
+    res.status(200).json({
+      message: "Password changed successfully",
+    });
+  } catch (err: unknown) {
+    const error = err as { status?: number; message?: string };
+    next(
+      createError(
+        error.status || 500,
+        error.message || "Failed to change password",
       ),
     );
   }

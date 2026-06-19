@@ -1,4 +1,5 @@
 import prisma from "../config/prisma";
+import { createNotification } from "./notification.service";
 
 export async function followUser(followerId: bigint, followingId: bigint) {
   if (followerId === followingId) {
@@ -31,6 +32,13 @@ export async function followUser(followerId: bigint, followingId: bigint) {
       follower_id: followerId,
       following_id: followingId,
     },
+  });
+
+  // Thông báo cho người được theo dõi
+  await createNotification({
+    recipientId: followingId,
+    actorId: followerId,
+    type: "follow",
   });
 
   return {
